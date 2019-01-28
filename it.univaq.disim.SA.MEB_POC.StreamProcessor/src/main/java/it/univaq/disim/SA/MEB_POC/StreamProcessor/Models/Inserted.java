@@ -1,6 +1,5 @@
-package it.univaq.disim.SA.MEB_POC.StreamProcessor;
+package it.univaq.disim.SA.MEB_POC.StreamProcessor.Models;
 
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
@@ -56,7 +55,6 @@ public class Inserted {
 		return hold_flag;
 	}
 
-	@XmlElement
 	public void setHold_flag(String Hold_flag) {
 		this.hold_flag = Hold_flag;
 	}

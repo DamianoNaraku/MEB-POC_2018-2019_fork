@@ -1,4 +1,4 @@
-package it.univaq.disim.SA.MEB_POC.StreamProcessor;
+package it.univaq.disim.SA.MEB_POC.StreamProcessor.Models;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;

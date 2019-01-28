@@ -23,6 +23,8 @@ import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Predicate;
 import org.apache.kafka.streams.kstream.ValueJoiner;
 
+import it.univaq.disim.SA.MEB_POC.StreamProcessor.Models.InhibitEvent;
+
 public class StreamInstance {
 
 	private final static String TOPIC = "toolsEvents";
