@@ -20,7 +20,6 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.GlobalKTable;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
-import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Predicate;
 import org.apache.kafka.streams.kstream.ValueJoiner;
 
@@ -41,16 +40,20 @@ public class StreamInstance {
 
 		Properties props = new Properties();
 		props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-		props.put(StreamsConfig.APPLICATION_ID_CONFIG, "MEBKafkaStreamCluster"); // Setting this property is necessary for instances synchronization
+		// Setting the following property is necessary for instances synchronization
+		// The application.id should be the same for all instances
+		props.put(StreamsConfig.APPLICATION_ID_CONFIG, "MEBKafkaStreamCluster");
 		props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
 		props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+		// Setting the following property is only used in testing scenarios for running more instances on localhost
+		// If not set the default directory is "/tmp/kafka-streams"
+		//props.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kafka-streams/instance3");
 
 		StreamsBuilder builder = new StreamsBuilder();
 
 		KStream<String, String> inputStream = builder.stream(TOPIC);
 
 		KStream<String, String> holdONStream = inputStream.filter(new Predicate<String, String>() {
-			@Override
 			public boolean test(String key, String value) {
 				InhibitEvent event = JAXB.unmarshal(new StringReader(value), InhibitEvent.class);
 				if (event.getInserted().getHold_flag().equals("Y")) {
@@ -63,11 +66,9 @@ public class StreamInstance {
 		holdONStream.to("globalTableHoldON");
 
 		// The HoldOn events are store in a GlobalKTable to be read by every Kafka Stream instance of the 'MEBKafkaStreamCluster'
-		GlobalKTable<String, String> globalTableHoldON = builder.globalTable("globalTableHoldON",
-				Materialized.as("HoldONstore"));
+		GlobalKTable<String, String> globalTableHoldON = builder.globalTable("globalTableHoldON");
 
 		KStream<String, String> holdOFFStream = inputStream.filter(new Predicate<String, String>() {
-			@Override
 			public boolean test(String key, String value) {
 				InhibitEvent event = JAXB.unmarshal(new StringReader(value), InhibitEvent.class);
 				if (event.getInserted().getHold_flag().equals("N")) {
@@ -82,14 +83,11 @@ public class StreamInstance {
 		KStream<String, List<InhibitEvent>> joined = holdOFFStream.join(globalTableHoldON,
 				new KeyValueMapper<String, String, String>() {
 
-					@Override
 					public String apply(String key, String value) {
-						System.out.println(key);
 						return key;
 					}
 				}, new ValueJoiner<String, String, List<InhibitEvent>>() {
 
-					@Override
 					public List<InhibitEvent> apply(String value1, String value2) {
 
 						List<InhibitEvent> YandN = new ArrayList<InhibitEvent>();
@@ -127,7 +125,7 @@ public class StreamInstance {
 				holdType = ONevent.getInserted().getHold_type();
 
 				// Generation of KeyValue pairs of JSON (Schema + Payload) for JDBC Sink
-				// Connector reading data from 'aggregateddata' topic
+				// API Connector reading data from 'aggregateddata' topic
 				for (String equipName : equipNames) {
 					String json = "{\r\n" + " \"schema\": {\r\n" + "	\"type\": \"struct\",\r\n"
 							+ "	\"fields\": [\r\n" + "		{\r\n" + "			\"type\": \"string\",\r\n"
@@ -147,6 +145,7 @@ public class StreamInstance {
 							+ OFFevent.getInserted().getEvent_datetime() + "\"\r\n" + " }\r\n" + "}";
 
 					result.add(new KeyValue<String, String>(key, json));
+					System.out.println("New aggregated data published on output topic!");
 				}
 
 				return result;
@@ -159,21 +158,6 @@ public class StreamInstance {
 
 		KafkaStreams myStream = new KafkaStreams(builder.build(), props);
 		myStream.start();
-
-		/*
-		 * try { Thread.sleep(20000); } catch (InterruptedException e1) { // TODO
-		 * Auto-generated catch block e1.printStackTrace(); }
-		 * ReadOnlyKeyValueStore<String, Object> view; while (true) { try {
-		 * System.out.println(globalTableHoldON.queryableStoreName()); view =
-		 * myStream.store(globalTableHoldON.queryableStoreName(),
-		 * QueryableStoreTypes.keyValueStore());
-		 * System.out.println(view.get("_0x0C995024G1000080_ProcessEquipHold")); try {
-		 * Thread.sleep(20000); } catch (InterruptedException e) { // TODO
-		 * Auto-generated catch block e.printStackTrace(); } } catch
-		 * (InvalidStateStoreException ignored) { // store not yet ready for querying
-		 * try { Thread.sleep(20000); } catch (InterruptedException e) { // TODO
-		 * Auto-generated catch block e.printStackTrace(); } } }
-		 */
 	}
 
 	private static void makeJDBCConnection() {
