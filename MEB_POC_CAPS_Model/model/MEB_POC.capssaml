@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<components:SoftwareArchitecture xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:components="components">
+  <SAElements xsi:type="components:Component" name="tools">
+    <ports xsi:type="components:OutMessagePort"/>
+    <modes xsi:type="components:InitialMode">
+      <behaviouralElements xsi:type="components:BroadcastSendMessage" name="SendXMLEvent" incoming="//@SAElements.0/@modes.0/@behaviouralElements.5" data="InhibitEvent" toMessagePorts="//@SAElements.0/@ports.0" dataRecipient="//@SAElements.0/@applicationData.0"/>
+      <behaviouralElements xsi:type="components:Sense" name="senseHoldTypeEvents" outgoing="//@SAElements.0/@modes.0/@behaviouralElements.5" incoming="//@SAElements.0/@modes.0/@behaviouralElements.4" dataRecipient="//@SAElements.0/@applicationData.0"/>
+      <behaviouralElements xsi:type="components:StartTimer" name="tool hold time"/>
+      <behaviouralElements xsi:type="components:TimerFired" outgoing="//@SAElements.0/@modes.0/@behaviouralElements.4" timer="//@SAElements.0/@modes.0/@behaviouralElements.2"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.0/@modes.0/@behaviouralElements.3" target="//@SAElements.0/@modes.0/@behaviouralElements.1"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.0/@modes.0/@behaviouralElements.1" target="//@SAElements.0/@modes.0/@behaviouralElements.0"/>
+    </modes>
+    <applicationData xsi:type="components:PrimitiveDataDeclaration" dataName="XML event" value="&lt;InhibitEvent xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;>" type="string"/>
+  </SAElements>
+  <SAElements xsi:type="components:Component" name="Broadcast Intercepetor Nodes">
+    <ports xsi:type="components:InMessagePort"/>
+    <ports xsi:type="components:OutMessagePort"/>
+    <modes xsi:type="components:InitialMode">
+      <behaviouralElements xsi:type="components:ReceiveMessage" name="ReceiveXMLEvent" outgoing="//@SAElements.1/@modes.0/@behaviouralElements.2" dataRecipientName="InhibitEvent" fromMessagePorts="//@SAElements.1/@ports.0" dataRecipient="//@SAElements.0/@applicationData.0"/>
+      <behaviouralElements xsi:type="components:Server" name="Producer Nodes" outgoing="//@SAElements.1/@modes.0/@behaviouralElements.4" incoming="//@SAElements.1/@modes.0/@behaviouralElements.2"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.1/@modes.0/@behaviouralElements.0" target="//@SAElements.1/@modes.0/@behaviouralElements.1"/>
+      <behaviouralElements xsi:type="components:UnicastSendMessage" name="PublisherRecord" incoming="//@SAElements.1/@modes.0/@behaviouralElements.4" data="InhibitEvent" toMessagePorts="//@SAElements.1/@ports.1" dataRecipient="//@SAElements.0/@applicationData.0"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.1/@modes.0/@behaviouralElements.1" target="//@SAElements.1/@modes.0/@behaviouralElements.3"/>
+    </modes>
+  </SAElements>
+  <SAElements xsi:type="components:Connection" source="//@SAElements.0/@ports.0" target="//@SAElements.1/@ports.0"/>
+  <SAElements xsi:type="components:Component" name="Kafka Cluster">
+    <ports xsi:type="components:InMessagePort"/>
+    <ports xsi:type="components:OutMessagePort"/>
+    <modes xsi:type="components:InitialMode">
+      <behaviouralElements xsi:type="components:Server" name="Kafka Stream Replicas" outgoing="//@SAElements.3/@modes.0/@behaviouralElements.5 //@SAElements.3/@modes.0/@behaviouralElements.12" incoming="//@SAElements.3/@modes.0/@behaviouralElements.4 //@SAElements.3/@modes.0/@behaviouralElements.15"/>
+      <behaviouralElements xsi:type="components:Server" name="Kafka Topic Replicas" outgoing="//@SAElements.3/@modes.0/@behaviouralElements.4 //@SAElements.3/@modes.0/@behaviouralElements.9" incoming="//@SAElements.3/@modes.0/@behaviouralElements.3 //@SAElements.3/@modes.0/@behaviouralElements.5 //@SAElements.3/@modes.0/@behaviouralElements.7"/>
+      <behaviouralElements xsi:type="components:ReceiveMessage" name="ReceiveProducerRecord" outgoing="//@SAElements.3/@modes.0/@behaviouralElements.3" dataRecipientName="InhibitEvnt" fromMessagePorts="//@SAElements.3/@ports.0" dataRecipient="//@SAElements.0/@applicationData.0"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.3/@modes.0/@behaviouralElements.2" target="//@SAElements.3/@modes.0/@behaviouralElements.1"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.3/@modes.0/@behaviouralElements.1" target="//@SAElements.3/@modes.0/@behaviouralElements.0"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.3/@modes.0/@behaviouralElements.0" target="//@SAElements.3/@modes.0/@behaviouralElements.1"/>
+      <behaviouralElements xsi:type="components:Server" name="ZooKeeper Unit" outgoing="//@SAElements.3/@modes.0/@behaviouralElements.7"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.3/@modes.0/@behaviouralElements.6" target="//@SAElements.3/@modes.0/@behaviouralElements.1"/>
+      <behaviouralElements xsi:type="components:Server" name="JDBC Distributed Connector" outgoing="//@SAElements.3/@modes.0/@behaviouralElements.13" incoming="//@SAElements.3/@modes.0/@behaviouralElements.9"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.3/@modes.0/@behaviouralElements.1" target="//@SAElements.3/@modes.0/@behaviouralElements.8"/>
+      <behaviouralElements xsi:type="components:UnicastSendMessage" name="Query" incoming="//@SAElements.3/@modes.0/@behaviouralElements.13" data="INSERT INTO analytics_database" toMessagePorts="//@SAElements.3/@ports.1"/>
+      <behaviouralElements xsi:type="components:UnicastSendMessage" name="Query" incoming="//@SAElements.3/@modes.0/@behaviouralElements.12" data="SELECT Name FROM raw_data" toMessagePorts="//@SAElements.3/@ports.1" dataRecipient="//@SAElements.3/@applicationData.0"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.3/@modes.0/@behaviouralElements.0" target="//@SAElements.3/@modes.0/@behaviouralElements.11"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.3/@modes.0/@behaviouralElements.8" target="//@SAElements.3/@modes.0/@behaviouralElements.10"/>
+      <behaviouralElements xsi:type="components:ReceiveMessage" name="Receive OID Names" outgoing="//@SAElements.3/@modes.0/@behaviouralElements.15" dataRecipientName="Name" dataRecipient="//@SAElements.3/@applicationData.1"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.3/@modes.0/@behaviouralElements.14" target="//@SAElements.3/@modes.0/@behaviouralElements.0"/>
+    </modes>
+    <applicationData xsi:type="components:PrimitiveDataDeclaration" dataName="Query" value="INSERT INTO analytics_database.aggregateddata VALUES()" type="string"/>
+    <applicationData xsi:type="components:PrimitiveDataDeclaration" dataName="OID Name" value="&quot;&quot;" type="string"/>
+  </SAElements>
+  <SAElements xsi:type="components:Component" name="Mysql Cluster">
+    <ports xsi:type="components:InMessagePort"/>
+    <ports xsi:type="components:OutMessagePort"/>
+    <modes xsi:type="components:InitialMode">
+      <behaviouralElements xsi:type="components:StoreData" name="Distributed Store" incoming="//@SAElements.4/@modes.0/@behaviouralElements.6" dataRecipient="//@SAElements.3/@applicationData.0" data="Aggregated Data"/>
+      <behaviouralElements xsi:type="components:Server" name="MySql Cluster Manager" outgoing="//@SAElements.4/@modes.0/@behaviouralElements.6 //@SAElements.4/@modes.0/@behaviouralElements.8 //@SAElements.4/@modes.0/@behaviouralElements.10" incoming="//@SAElements.4/@modes.0/@behaviouralElements.4 //@SAElements.4/@modes.0/@behaviouralElements.5"/>
+      <behaviouralElements xsi:type="components:ReceiveMessage" name="ReceiveQuery" outgoing="//@SAElements.4/@modes.0/@behaviouralElements.5" dataRecipientName="SELECT FROM raw_data" fromMessagePorts="//@SAElements.4/@ports.0" dataRecipient="//@SAElements.3/@applicationData.0"/>
+      <behaviouralElements xsi:type="components:ReceiveMessage" name="ReceiveQuery" outgoing="//@SAElements.4/@modes.0/@behaviouralElements.4" dataRecipientName="INSERT INTO analytics_databse" fromMessagePorts="//@SAElements.4/@ports.0" dataRecipient="//@SAElements.3/@applicationData.0"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.4/@modes.0/@behaviouralElements.3" target="//@SAElements.4/@modes.0/@behaviouralElements.1"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.4/@modes.0/@behaviouralElements.2" target="//@SAElements.4/@modes.0/@behaviouralElements.1"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.4/@modes.0/@behaviouralElements.1" target="//@SAElements.4/@modes.0/@behaviouralElements.0"/>
+      <behaviouralElements xsi:type="components:UnicastSendMessage" name="OID Name" incoming="//@SAElements.4/@modes.0/@behaviouralElements.8" data="Name" toMessagePorts="//@SAElements.4/@ports.1" dataRecipient="//@SAElements.3/@applicationData.1"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.4/@modes.0/@behaviouralElements.1" target="//@SAElements.4/@modes.0/@behaviouralElements.7"/>
+      <behaviouralElements xsi:type="components:UnicastSendMessage" incoming="//@SAElements.4/@modes.0/@behaviouralElements.10" data="Number of holds" toMessagePorts="//@SAElements.4/@ports.1" dataRecipient="//@SAElements.7/@applicationData.0"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.4/@modes.0/@behaviouralElements.1" target="//@SAElements.4/@modes.0/@behaviouralElements.9"/>
+    </modes>
+  </SAElements>
+  <SAElements xsi:type="components:Connection" source="//@SAElements.3/@ports.1" target="//@SAElements.4/@ports.0"/>
+  <SAElements xsi:type="components:Connection" source="//@SAElements.1/@ports.1" target="//@SAElements.3/@ports.0"/>
+  <SAElements xsi:type="components:Component" name="Report tool">
+    <ports xsi:type="components:OutMessagePort"/>
+    <ports xsi:type="components:InMessagePort"/>
+    <modes xsi:type="components:InitialMode">
+      <behaviouralElements xsi:type="components:Server" name="Client" outgoing="//@SAElements.7/@modes.0/@behaviouralElements.3" incoming="//@SAElements.7/@modes.0/@behaviouralElements.4 //@SAElements.7/@modes.0/@behaviouralElements.6"/>
+      <behaviouralElements xsi:type="components:UnicastSendMessage" name="Query" incoming="//@SAElements.7/@modes.0/@behaviouralElements.3" data="SELECT FROM analytics_database" toMessagePorts="//@SAElements.7/@ports.0" dataRecipient="//@SAElements.3/@applicationData.0"/>
+      <behaviouralElements xsi:type="components:ReceiveMessage" name="Result" outgoing="//@SAElements.7/@modes.0/@behaviouralElements.4" dataRecipientName="Number of holds" fromMessagePorts="//@SAElements.7/@ports.1" dataRecipient="//@SAElements.7/@applicationData.0"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.7/@modes.0/@behaviouralElements.0" target="//@SAElements.7/@modes.0/@behaviouralElements.1"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.7/@modes.0/@behaviouralElements.2" target="//@SAElements.7/@modes.0/@behaviouralElements.0"/>
+      <behaviouralElements xsi:type="components:ReceiveMessage" name="Result" outgoing="//@SAElements.7/@modes.0/@behaviouralElements.6" dataRecipientName="Names" fromMessagePorts="//@SAElements.7/@ports.1" dataRecipient="//@SAElements.7/@applicationData.1"/>
+      <behaviouralElements xsi:type="components:Link" source="//@SAElements.7/@modes.0/@behaviouralElements.5" target="//@SAElements.7/@modes.0/@behaviouralElements.0"/>
+    </modes>
+    <applicationData xsi:type="components:PrimitiveDataDeclaration" dataName="Counter" value="0"/>
+    <applicationData xsi:type="components:PrimitiveDataDeclaration" dataName="Names" value="&quot;&quot;" type="string"/>
+  </SAElements>
+  <SAElements xsi:type="components:Connection" source="//@SAElements.7/@ports.0" target="//@SAElements.4/@ports.0"/>
+  <SAElements xsi:type="components:Connection" source="//@SAElements.4/@ports.1" target="//@SAElements.3/@ports.0"/>
+  <SAElements xsi:type="components:Connection" source="//@SAElements.4/@ports.1" target="//@SAElements.7/@ports.1"/>
+</components:SoftwareArchitecture>
