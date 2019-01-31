@@ -1,0 +1,18 @@
+c:\users\diama\documents\visual studio 2017\Projects\a\a\bin\Debug\a.exe.config
+c:\users\diama\documents\visual studio 2017\Projects\a\a\bin\Debug\a.exe
+c:\users\diama\documents\visual studio 2017\Projects\a\a\bin\Debug\a.pdb
+c:\users\diama\documents\visual studio 2017\Projects\a\a\obj\Debug\a.csprojResolveAssemblyReference.cache
+c:\users\diama\documents\visual studio 2017\Projects\a\a\obj\Debug\a.Properties.Resources.resources
+c:\users\diama\documents\visual studio 2017\Projects\a\a\obj\Debug\a.csproj.GenerateResource.Cache
+c:\users\diama\documents\visual studio 2017\Projects\a\a\obj\Debug\a.exe
+c:\users\diama\documents\visual studio 2017\Projects\a\a\obj\Debug\a.pdb
+C:\Users\diama\documents\visual studio 2017\Projects\a\a\bin\Debug\C5.dll
+C:\Users\diama\documents\visual studio 2017\Projects\a\a\bin\Debug\Newtonsoft.Json.dll
+C:\Users\diama\documents\visual studio 2017\Projects\a\a\bin\Debug\Priority Queue.dll
+C:\Users\diama\documents\visual studio 2017\Projects\a\a\bin\Debug\C5.xml
+C:\Users\diama\documents\visual studio 2017\Projects\a\a\bin\Debug\Newtonsoft.Json.pdb
+C:\Users\diama\documents\visual studio 2017\Projects\a\a\bin\Debug\Newtonsoft.Json.xml
+C:\Users\diama\documents\visual studio 2017\Projects\a\a\bin\Debug\Priority Queue.pdb
+C:\Users\diama\documents\visual studio 2017\Projects\a\a\bin\Debug\Priority Queue.xml
+C:\Users\diama\documents\visual studio 2017\Projects\a\a\bin\Debug\kafka-net.dll
+C:\Users\diama\documents\visual studio 2017\Projects\a\a\obj\Debug\a.GUI.resources
