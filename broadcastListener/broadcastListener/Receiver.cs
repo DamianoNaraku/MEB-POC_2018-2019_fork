@@ -34,7 +34,7 @@ namespace broadcastListener
         public abstract void stop(object stopReason);
         public virtual void receiveBroadcast(object unused){
             receiveBroadcast0(unused);
-            //try { receiveBroadcast0(unused); } catch (Exception e) { MessageBox.Show(e.ToString()); }
+            //try { receiveBroadcast0(unused); } catch (Exception e) { if (e is ThreadAbortException) return; string s = "exception in ReceiveBroadcast()" + e.ToString(); Program.pe(s); MessageBox.Show(s); }
         }
         public virtual void receiveBroadcast0(object unused) {
             //Receiver r = (Receiver)arg;
@@ -57,6 +57,7 @@ namespace broadcastListener
                 this.minMessageTime = TimeSpan.MaxValue;
                 this.maxMessageTime = TimeSpan.MinValue;
                 this.totMessageTime = new TimeSpan(0);
+                Thread me = Thread.CurrentThread;
                 while (true) {
                     //if (ciclo-- == 0) { ciclo = 1000; Thread.Sleep(1000000); throw new Exception("work done"); }
                     //data = Program.fakereceive();
@@ -92,7 +93,7 @@ namespace broadcastListener
                         ReceiverTool.messageQueue.Add(msg);
                         //if (ReceiverTool.messageQueue.Count == 0) throw new Exception();
                         Master.canPublish.Release(1);
-                        if (Program.args.logToolMsgOnReceive == true) { Program.LogToolMsg("Rcv: " + msg); } }
+                        if (Program.args.logToolMsgOnReceive == true) { Program.LogToolMsg(me.Name+"Rcv: " + msg); } }
                     else {
                         SlaveReceiver.SlaveMessageQueue.Add(msg);
                         //if (SlaveReceiver.SlaveMessageQueue.Count == 0) throw new Exception();
@@ -100,7 +101,6 @@ namespace broadcastListener
                         //Program.logSlave("Rcv: " + msg); 
                     }
                 
-                    Thread me = Thread.CurrentThread;
                     //StartupArgJson debug = Program.args;
                     //EndPoint ee = this.endpoint;
                     if (msg.type == MessageType.xml && (me.Name == null || me.Name[0] == 'I')) { Program.pe("Got xml data on the slave receiver (msg was sent on wrong broadacast port)"); continue; }
@@ -119,21 +119,26 @@ namespace broadcastListener
                 }
             }
             catch (ThreadAbortException e) {
-                DateTime stopTime = DateTime.Now;
                 Program.p("Thread receiver ("+this.GetType()+") aborted; Last data handled:"+ (data == null ? "none" : data.arrayToString()), e);
                 if (!Program.args.benchmark) return;
-                TimeSpan elapsed = stopTime - startTime;
-                string s = 
-                    Thread.CurrentThread.Name+" Performance data: time for fully handling a single message (excluding discarded)." + Environment.NewLine +
-                    "Min time:" + this.minMessageTime + Environment.NewLine +
-                    "Avg time:" + new TimeSpan((long)(this.totMessageTime.Ticks / (double)accepted)) + " (messageTime/accepted = "+this.totMessageTime+"/"+ accepted+")"+ Environment.NewLine +
-                    "Max time:" + this.maxMessageTime + Environment.NewLine + Environment.NewLine +
-                    "Throughput, including time spent waiting messages:" + ((double)accepted / elapsed.TotalSeconds) + "msg/sec. (accepted/seconds_Elapsed = " + accepted+"/"+ elapsed.TotalSeconds + ")" + Environment.NewLine +
-                    "";
+                string s = getstatistics();
                 MessageBox.Show(s);
                 Program.p(s);
                 return;
             }
+        }
+        public string getstatistics() {
+                DateTime stopTime = DateTime.Now;
+                TimeSpan elapsed = stopTime - startTime;
+            string s;
+            if (accepted == 0) { s = Thread.CurrentThread.Name + " has received 0 messages, cannot compute statistics."; }
+            s =     Thread.CurrentThread.Name + " Performance data: time for fully handling a single message (excluding discarded)." + Environment.NewLine +
+                    "Min time:" + this.minMessageTime + Environment.NewLine +
+                    "Avg time:" + new TimeSpan((long)(this.totMessageTime.Ticks / (double)accepted)) + " (messageTime/accepted = " + this.totMessageTime + "/" + accepted + ")" + Environment.NewLine +
+                    "Max time:" + this.maxMessageTime + Environment.NewLine + Environment.NewLine +
+                    "Throughput, including time spent waiting messages:" + ((double)accepted / elapsed.TotalSeconds) + "msg/sec. (accepted/seconds_Elapsed = " + accepted + "/" + elapsed.TotalSeconds + ")" + Environment.NewLine +
+                    "";
+            return s;
         }
     }
 }

@@ -16,9 +16,8 @@ namespace broadcastListener
         public enum ExecutionMode { debug, production };
         public static StartupArgJson args;
         public static ExecutionMode mode = ExecutionMode.debug;
-
-        public const int broadcastReceivePort = 20 * 1000 + 1;//unregistered until 20560
-        public const int replication = 4;
+        //public const int broadcastReceivePort = 20000 + 1;//unregistered until 20560
+        //public const int replication = 4;
         //private static IPEndPoint broadcastEP;
 
 
@@ -26,14 +25,20 @@ namespace broadcastListener
         /// The main entry point for the application.
         /// </summary>
         [STAThread] private static void Main(string[] args_Raw) {
-            if (Program.mode == Program.ExecutionMode.debug) { args_Raw = StartupArgJson.fakeinput(); }
+            //MessageBox.Show(args_Raw == null || args_Raw.Length < 1 ? "Empty argument" : args_Raw[0]); return;
+            if (args_Raw == null || args_Raw.Length < 1) { args_Raw = StartupArgJson.fakeinput(); }
             if (args_Raw.Length != 1) args_Raw = new string[] { "TriggerError Message: there must be only a single argument." };
             Program.args = StartupArgJson.deserialize(args_Raw[0]);
             if (Program.args == null || !Program.args.Validate()) return;
-            Clipboard.SetText(args_Raw[0]);
+            try { Clipboard.SetText(args_Raw[0]); }catch(Exception e) { Program.pe("Unable to load JSON-string argument in clipboard, reason:" + e.ToString()); }
             HotRestart();
 
         }
+        /// <summary>
+        /// This function allows to change parameters at run-time without ceasing to receive broadcasted message.
+        /// To trigger this function, a broadcast message must be sent to the arguments.broadcastPort_Slaves port, 
+        /// containing serialized object instance of myMessage class with msg.key = MessageType.argumentChange and msg.data = Json-stringified-arguments.
+        /// </summary>
         public static void HotRestart() {
             IPAddress tmp = IPAddress.Parse(Program.args.broadcastAddress);
             Slave.broadcastToSlaveEP = new IPEndPoint(tmp, Program.args.broadcastPort_Slaves);
@@ -74,6 +79,7 @@ namespace broadcastListener
             ReceiverTool.Start();
             //MessageBox.Show("Done");
             if (args.enableGUI && GUI.thiss == null) {
+                //args.enableGUI = false;//debug only
                 Thread.CurrentThread.Name = "MainGuiThread";
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
@@ -122,32 +128,30 @@ namespace broadcastListener
         /// <param name="s"></param>
         /// <param name="e"></param>
         public static void pex(string s, Exception e = null) {
-            try {if (GUI.thiss != null && GUI.thiss.InvokeRequired) { GUI.thiss.Invoke(new delegateVoidStringException(pex), new object[] { s, e }); return; } } catch (Exception) { }
+            try {if (GUI.thiss != null && GUI.thiss.InvokeRequired) { GUI.thiss.Invoke(new delegateVoidStringException(pex), new object[] { s, e }); return; } } catch (Exception) { return; }
             s = (pexLine) + "*} " + s + (e == null ? "" : Environment.NewLine + pexLine + ") " + e.ToString()) + Environment.NewLine;
             pexLine++;
             lock (pexs) pexs += s;
-            lock (Program.args.criticalErrFile) if (Program.args.criticalErrFile != null) {
+            if (Program.args.criticalErrFile != null) lock (Program.args.criticalErrFile) {
                 if (criticalErrorFile == null) {
                     criticalErrorFilef = File.Open(Program.args.criticalErrFile, FileMode.Append, FileAccess.Write);
                     criticalErrorFile = new StreamWriter(criticalErrorFilef);
                 }
-                //string[] tmp = s.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
-                //File.AppendAllLines(Program.args.criticalErrFile, tmp); }
                 lock (criticalErrorFile) criticalErrorFile.Write(s);
             }
             try
             {
+                MessageBox.Show(s);
                 if (GUI.thiss != null && GUI.thiss != null && !GUI.thiss.Disposing && !GUI.thiss.IsDisposed
                 && GUI.thiss.richTextBoxErrors != null && !GUI.thiss.richTextBoxErrors.Disposing && !GUI.thiss.richTextBoxErrors.IsDisposed)
                 {
                     lock (pexs) GUI.thiss.richTextBoxErrors.Text = pexs;
                 }
-                MessageBox.Show(s);
             }
             
             catch (Exception) { }
             
-            GUI.GUI_FormClosing(null, null);
+            GUI.exit();
         }
         /// <summary>
         /// log for unexpected events and exceptions. The error happened is likely recoverable and the system should still be able to work.
@@ -155,28 +159,32 @@ namespace broadcastListener
         /// <param name="s"></param>
         /// <param name="e"></param>
         internal static void pe(string s, Exception e = null) {
-            try { if (GUI.thiss != null && GUI.thiss.InvokeRequired) { GUI.thiss.Invoke(new delegateVoidStringException(pe), new object[] { s, e }); return; } } catch (Exception) { }
-            s = (peLine) + ") " + s + (e == null ? "" : Environment.NewLine + peLine + ") " + e.ToString()) + Environment.NewLine;
-            peLine++;
-            lock (pes) pes += s;
-            lock (Program.args.errFile) if (Program.args.errFile != null) {
-                if (ErrorFile == null) {
-                    ErrorFilef = File.Open(Program.args.errFile, FileMode.Append, FileAccess.Write);
-                    ErrorFile = new StreamWriter(ErrorFilef);
-                //string[] tmp = s.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
-                //File.AppendAllLines(Program.args.logFile, tmp);
-                lock (ErrorFile) ErrorFile.Write(s);
-                }
-            }
+            try { if (GUI.thiss != null && GUI.thiss.InvokeRequired) { GUI.thiss.Invoke(new delegateVoidStringException(pe), new object[] { s, e }); return; } } catch (Exception) { return; }
             try
             {
-                if (GUI.thiss != null && GUI.thiss != null && !GUI.thiss.Disposing && !GUI.thiss.IsDisposed
-                && GUI.thiss.richTextBoxErrors != null && !GUI.thiss.richTextBoxErrors.Disposing && !GUI.thiss.richTextBoxErrors.IsDisposed)
+                s = (peLine) + ") " + s + (e == null ? "" : Environment.NewLine + peLine + ") " + e.ToString()) + Environment.NewLine;
+                peLine++;
+                lock (pes) pes += s;
+                if (Program.args.errFile != null) lock (Program.args.errFile)
+                    {
+                        if (ErrorFile == null)
+                        {
+                            ErrorFilef = File.Open(Program.args.errFile, FileMode.Append, FileAccess.Write);
+                            ErrorFile = new StreamWriter(ErrorFilef);
+                            lock (ErrorFile) ErrorFile.Write(s);
+                        }
+                    }
+                try
                 {
-                    lock (pes) GUI.thiss.richTextBoxErrors.Text = pes;
+                    if (GUI.thiss != null && GUI.thiss != null && !GUI.thiss.Disposing && !GUI.thiss.IsDisposed
+                    && GUI.thiss.richTextBoxErrors != null && !GUI.thiss.richTextBoxErrors.Disposing && !GUI.thiss.richTextBoxErrors.IsDisposed)
+                    {
+                        lock (pes) GUI.thiss.richTextBoxErrors.Text = pes;
+                    }
                 }
+                catch (Exception) { }
             }
-            catch (Exception) { }
+            catch (Exception ex) { MessageBox.Show("Exception in logError: " + s +"; "+ ex.ToString()); }
         }
         /// <summary>
         /// log for expected events and exceptions.
@@ -184,17 +192,18 @@ namespace broadcastListener
         /// <param name="s"></param>
         /// <param name="e"></param>
         internal static void p(string s, Exception e = null) {
-            if (GUI.thiss != null && GUI.thiss.InvokeRequired && !GUI.thiss.IsDisposed && !GUI.thiss.Disposing) {
-                try { GUI.thiss.Invoke(new delegateVoidStringException(p), new object[] { s, e }); return; } catch (Exception) { } }
+            if (Program.args.enableGUI && GUI.thiss != null && GUI.thiss.InvokeRequired && !GUI.thiss.IsDisposed && !GUI.thiss.Disposing) {
+                try { GUI.thiss.Invoke(new delegateVoidStringException(p), new object[] { s, e }); return; } catch (Exception) { return; } }
             try
             {
                 s = (pLine) + ") " + s + (e == null ? "" : Environment.NewLine + pLine + ") " + (e == null ? "" : e.ToString())) + Environment.NewLine;
                 pLine++;
                 lock (ps) ps += s;
-                lock (Program.args.logFile) if (Program.args.logFile != null)
+                if (Program.args.logFile != null) lock (Program.args.logFile) 
                     {
                         if (LogFile == null)
                         {
+                            //MessageBox.Show("ceF:" + args.criticalErrFile + "; eF" + args.errFile + ";logF" + args.logFile); return;
                             LogFilef = File.Open(Program.args.logFile, FileMode.Append, FileAccess.Write);
                             LogFile = new StreamWriter(LogFilef);
                         }
@@ -204,7 +213,8 @@ namespace broadcastListener
                     }
                 try
                 {
-                    if (GUI.thiss != null && !GUI.thiss.Disposing && !GUI.thiss.IsDisposed
+                    if (!Program.args.enablePrintStatus) return;
+                    if (Program.args.enableGUI && GUI.thiss != null && !GUI.thiss.Disposing && !GUI.thiss.IsDisposed
                     && GUI.thiss.textboxStatus != null && !GUI.thiss.textboxStatus.Disposing && !GUI.thiss.textboxStatus.IsDisposed)
                     {
                         lock (ps) GUI.thiss.textboxStatus.Text = ps;
@@ -212,7 +222,7 @@ namespace broadcastListener
                 }
                 catch (Exception) { }
             }
-            catch (Exception ex) { MessageBox.Show(""+ex.ToString()); }
+            catch (Exception ex) { MessageBox.Show("logStatus exception:"+s+"; "+ex.ToString()); }
         }        
         
         /// <summary>
@@ -221,13 +231,13 @@ namespace broadcastListener
         /// <param name="s"></param>
         /// <param name="e"></param>
         internal static void LogToolMsg(string s, Exception e = null) {
-            if (GUI.thiss != null && GUI.thiss.InvokeRequired && !GUI.thiss.IsDisposed && !GUI.thiss.Disposing) {
-                try { GUI.thiss.Invoke(new delegateVoidStringException(LogToolMsg), new object[] { s, null }); return; } catch (Exception) { } }
+            if (Program.args.enableGUI && GUI.thiss != null && GUI.thiss.InvokeRequired && !GUI.thiss.IsDisposed && !GUI.thiss.Disposing) {
+                try { GUI.thiss.Invoke(new delegateVoidStringException(LogToolMsg), new object[] { s, null }); return; } catch (Exception) { return; } }
             try{
                 s = (ptLine) + ") " + s + (e == null ? "" : Environment.NewLine + ptLine + ") " + (e == null ? "" : e.ToString())) + Environment.NewLine;
                 ptLine++;
                 lock (pts) pts += s;
-                lock (Program.args.toolMsgFile) if (Program.args.toolMsgFile != null){
+                if (Program.args.toolMsgFile != null) lock (Program.args.toolMsgFile) {
                         if (ToolMsgFile == null)
                         {
                             ToolMsgFilef = File.Open(Program.args.toolMsgFile, FileMode.Append, FileAccess.Write);
@@ -239,7 +249,8 @@ namespace broadcastListener
                     }
                 try
                 {
-                    if (GUI.thiss != null && !GUI.thiss.Disposing && !GUI.thiss.IsDisposed
+                    if (!Program.args.enablePrintTool) return;
+                    if (Program.args.enableGUI && GUI.thiss != null && !GUI.thiss.Disposing && !GUI.thiss.IsDisposed
                     && GUI.thiss.richTextBoxmsg != null && !GUI.thiss.richTextBoxmsg.Disposing && !GUI.thiss.richTextBoxmsg.IsDisposed)
                     {
                         lock (pts) GUI.thiss.richTextBoxmsg.Text = pts;
@@ -247,7 +258,7 @@ namespace broadcastListener
                 }
                 catch (Exception) { }
             }
-            catch (Exception ex) { MessageBox.Show(""+ex.ToString()); }
+            catch (Exception ex) { MessageBox.Show("LogToolMsg exception: "+s+"; "+ex.ToString()); }
         }        
         /// <summary>
         /// log for expected events and exceptions.
@@ -255,13 +266,13 @@ namespace broadcastListener
         /// <param name="s"></param>
         /// <param name="e"></param>
         internal static void logSlave(string s, Exception e = null) {
-            if (GUI.thiss != null && GUI.thiss.InvokeRequired && !GUI.thiss.IsDisposed && !GUI.thiss.Disposing) {
-                try { GUI.thiss.Invoke(new delegateVoidStringException(logSlave), new object[] { s, null }); return; } catch (Exception) { } }
+            if (Program.args.enableGUI && GUI.thiss != null && GUI.thiss.InvokeRequired && !GUI.thiss.IsDisposed && !GUI.thiss.Disposing) {
+                try { GUI.thiss.Invoke(new delegateVoidStringException(logSlave), new object[] { s, null }); return; } catch (Exception) { return; } }
             try{
                 s = (psLine) + ") " + s + (e == null ? "" : Environment.NewLine + psLine + ") " + (e == null ? "" : e.ToString())) + Environment.NewLine;
                 psLine++;
                 lock (pss) pss += s;
-                lock (Program.args.slaveMsgFile) if (Program.args.slaveMsgFile != null){
+                if (Program.args.slaveMsgFile != null) lock (Program.args.slaveMsgFile) {
                         if (Program.SlaveMsgFile == null)
                         {
                             SlaveMsgFilef = File.Open(Program.args.slaveMsgFile, FileMode.Append, FileAccess.Write);
@@ -273,7 +284,8 @@ namespace broadcastListener
                     }
                 try
                 {
-                    if (GUI.thiss != null && !GUI.thiss.Disposing && !GUI.thiss.IsDisposed
+                    if (!Program.args.enablePrintSlave) return;
+                    if (Program.args.enableGUI && GUI.thiss != null && !GUI.thiss.Disposing && !GUI.thiss.IsDisposed
                     && GUI.thiss.richTextBoxSlave != null && !GUI.thiss.richTextBoxSlave.Disposing && !GUI.thiss.richTextBoxSlave.IsDisposed)
                     {
                         lock (pss) GUI.thiss.richTextBoxSlave.Text = pss;
@@ -281,7 +293,7 @@ namespace broadcastListener
                 }
                 catch (Exception) { }
             }
-            catch (Exception ex) { MessageBox.Show(""+ex.ToString()); }
+            catch (Exception ex) { MessageBox.Show("LogSlave exception: "+ s+"; "+ ex.ToString()); }
         }
         public static IPAddress GetMyIPAddress()
         {

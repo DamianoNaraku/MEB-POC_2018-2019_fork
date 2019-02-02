@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace broadcastListener
 {
@@ -35,7 +36,7 @@ namespace broadcastListener
 
         public void consumeLoop() {
             Program.p("SlaveMsgConsumer started");
-            try { consumeLoop0(); } catch (ThreadAbortException e) {; } }
+            try { consumeLoop0(); } catch (Exception e) { if (e is ThreadAbortException) return; string s = "exception in ReceiveBroadcast()" + e.ToString(); Program.pe(s); MessageBox.Show(s); } }
         public void consumeLoop0() {
             while (true) {
                 canConsume.WaitOne();

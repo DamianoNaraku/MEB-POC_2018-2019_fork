@@ -46,18 +46,24 @@ namespace broadcastListener
         }
         public static Exception ex = new Exception();
         public static string err { get { throw ex; } set { throw ex; } }
-        
-        public static int hash(byte[] msg){ return hashSafe(msg); }
 
-        public static int hashSafe(byte[] msg){
-            int skip = 50, lengthMax = 100;
+        public static int hash(string msg, int skip = 0, int lengthMax = int.MaxValue){
+            int length = Math.Min(msg.Length, lengthMax);
+            //nb: message length is always about 970 byte
+            int b = (msg.Length % 255);
+            while (length-- > skip) { b ^= msg[length]; }
+            return b % Program.args.partitionNumbers_Total;}
+
+        public static int hash(byte[] msg, int skip = 0, int lengthMax = int.MaxValue) { return hashSafe(msg, skip, lengthMax); }
+
+        public static int hashSafe(byte[] msg, int skip, int lengthMax){
             int length = Math.Min(msg.Length, lengthMax);
             //nb: message length is always about 970 byte
             byte b = (byte)(msg.Length % 255);
             while (length-- > skip) { b ^= msg[length]; }
             return b % Program.args.partitionNumbers_Total; }
-        public static int hashUnsafe(byte[] msg){//test if faster
-            int skip = 50, lengthMax = 100;
+        public static int hashUnsafe(byte[] msg, int skip, int lengthMax){//test if faster
+            //int skip = 50, lengthMax = 100;
             int length = (Math.Min(msg.Length, lengthMax) - skip*0) / sizeof(ulong);
             ulong val=0;
             unsafe {
@@ -100,7 +106,7 @@ namespace broadcastListener
                     recipe = raw.Substring(recipeStart, recipeEnd - recipeStart); }
                 else if (raw[recipeStart] == '/') { recipe = ""; recipeEnd = recipeStart; }
                 else {Program.pe("MakeKey error"); return raw; } }
-            if (myMessage.hash((equip + recipe).stringToByteArr()) != Program.args.myPartitionNumber) {
+            if (myMessage.hash((equip + recipe)) != Program.args.myPartitionNumber) {
                 this.type = MessageType.xml_NotOFMyPartition;
                 return def; }
             if ((stepStart = raw.IndexOf(stepS, recipeEnd)) == -1) { return def; }
@@ -252,9 +258,21 @@ namespace broadcastListener
             }
         }
 
-        public int CompareTo(object obj){
-            if (!(obj is myMessage)) { Program.pe("Invalid comparison: myMessage with " + (obj.GetType())); return -1; }
-            return arrivalTime.CompareTo(((myMessage)obj).arrivalTime);
+        public int CompareTo(object obj0){
+            if (!(obj0 is myMessage)) { Program.pe("Invalid comparison: myMessage with " + (obj0.GetType())); return -1; }
+            myMessage obj = (myMessage)obj0;
+            //comparison order: arrivalTime, key, data.
+            int ret = arrivalTime.CompareTo(obj.arrivalTime);
+            if (ret == 0) {
+                if (this.key != null) ret = obj.key != null ? this.key.CompareTo(obj.key) : -1;
+                else ret = obj.key == null ? 0 : 1;
+            }
+            if (ret == 0){
+                if (this.data == null) { return obj.data == null ? 0 : -1; }
+                else { ret = obj.data == null ? 1 : this.data.CompareTo(obj.data); }
+            }
+
+            return ret;
         }
     }
 }

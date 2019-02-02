@@ -49,12 +49,14 @@ namespace broadcastListener {
             // inoltre la perdita di un messaggio di intra-comunicazione non è vitale e nella maggior parte dei casi non produce effetti collaterali gravi.
             myThread.Priority = ThreadPriority.Highest;
             if (Program.args.exclusiveBind == true) {
-                ReceiverTool.udpClients.Add(udpClient = new UdpClient(this.endpoint));
+                try { ReceiverTool.udpClients.Add(udpClient = new UdpClient(this.endpoint)); }
+                catch (Exception e) { Program.pe("Error while binding broadcast adress:port, this could be caused by multiple instance running with argument exclusiveBind = true; reason:", e); }
                 udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, false);
                 udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, true);
             }
             else {
-                ReceiverTool.udpClients.Add(udpClient = new UdpClient());
+                try{ReceiverTool.udpClients.Add(udpClient = new UdpClient());}
+                catch (Exception e) { Program.pe("Error while binding broadcast adress:port, this could be caused by multiple instance running with argument exclusiveBind = true; reason:", e); }
                 udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
                 udpClient.ExclusiveAddressUse = false;

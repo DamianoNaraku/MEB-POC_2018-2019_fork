@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 
 namespace broadcastListener
-{
+{/*
     public class TimeIntPair : IComparable {
         public DateTime t;
         public int i;
@@ -20,7 +20,7 @@ namespace broadcastListener
             if (!(obj is TimeIntPair)) { Program.pe("Wrong comparison: TimeIntPair with " + obj.GetType()); return -1; }
             TimeIntPair pair = (TimeIntPair)obj;
             return t.CompareTo(pair.t); }
-    }
+    }*/
     public interface MessageQueueI {//todo: potrebbe diventare iMessageQueue<T> con T = TimedWithKeyInterface applicata a messageType per prendere timestamp e key con funzioni/proprietà.
         myMessage Add(myMessage m);
         myMessage get(string key, bool remove = false);
@@ -49,18 +49,28 @@ namespace broadcastListener
             this.msgBymsgKey = new Dictionary<string, myMessage>();
             sicurezzaPerDelayDeiThread = Program.args.slaveReceiverThreads > 1 ? new TimeSpan(0, 0, 0, 1, 0) : new TimeSpan(0); }
         public int Count { get {
-                int i = -1;
-                lock (this) { i = this.queue.Count; }
+                int i;
+                lock (this) { i = queue == null  ? -1 : this.queue.Count; }
                 return i;
             } }
         myMessage MessageQueueI.Add(myMessage m){
             if (m == null) return null;
             if (m.key == null) m.key = m.data;
             lock (this) {
-                if (this.msgBymsgKey.ContainsKey(m.key)) return null;//todo: non succederebbe "mai" (quasi) nell'esecuzione normale, ma forse dovrei usare una collezione che supproti i duplicati
+                if (this.msgBymsgKey.ContainsKey(m.key)) {
+                    Program.pe("duplicate detected and discarded.");
+                    return null; }//todo: non dovrebbe succedere mai nell'esecuzione normale, ma forse dovrei usare una collezione che supporti i duplicati
+                //int q = this.queue.Count, ke = this.msgBymsgKey.Count;
+                //if ( this.queue.Count != this.msgBymsgKey.Count) { Program.pe("error before insert element in queue. Q:" + this.queue.Count + this.msgBymsgKey.Count); }
                 this.msgBymsgKey.Add(m.key, m);
-                this.queue.Add(m); }
-            if (this.Count == 0) throw new Exception();
+                //bool b1 = queue.Contains(m);
+                /*bool b2 = */this.queue.Add(m);
+                //bool? b3=null;
+                //int q2 = this.queue.Count;
+                //myMessage alreadyPresent = null;
+                //if (!b2) b3 = this.queue.Remove(alreadyPresent);
+                //if (this.queue.Count == 0 || this.queue.Count != this.msgBymsgKey.Count) { Program.pe("failed to insert element in queue. Q:" + this.queue.Count + this.msgBymsgKey.Count); }
+            }
             return m; }
 
         ICollection<myMessage> MessageQueueI.extractAll(bool remove) {
@@ -78,8 +88,11 @@ namespace broadcastListener
             lock (this) {
                 this.msgBymsgKey.TryGetValue(key, out ret);
                 if(remove && ret != null) {
+                    //if (this.queue.Count != this.msgBymsgKey.Count) { Program.pe("errore before trying to remove element in queue. Q:" + this.queue.Count + this.msgBymsgKey.Count); }
                     this.queue.Remove(ret);
-                    this.msgBymsgKey.Remove(key); } }
+                    this.msgBymsgKey.Remove(key);
+                    //if (this.queue.Count != this.msgBymsgKey.Count){ Program.pe("failed to remove element in queue. Q:" + this.queue.Count + this.msgBymsgKey.Count); }
+                } }
             return ret; }
 
         ICollection<myMessage> MessageQueueI.getOlderThan(string key, bool remove){
@@ -110,7 +123,9 @@ namespace broadcastListener
                 ret = this.queue.Min;
                 if (remove && ret != null) ((MessageQueueI)this).get(ret.key, remove); }
             return ret; }
-    }/*
+    }
+    
+    /*
     public class MessageQueueOld{
         List<myMessage> queueSorted;
         SortedDictionary<int, myMessage> queue;

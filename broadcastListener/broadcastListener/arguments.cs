@@ -12,7 +12,7 @@ namespace broadcastListener{
     public class StartupArgJson{
         public int broadcastPort_Tool, broadcastPort_Slaves;
         public bool enableGUI;
-        public bool networkGuaranteeDatagramOrder;// in broadcast è impossibile che un programma ricevi A,B e un altro ricevi B,A; quindi dovrebbe essere sempre true.
+        public bool enablePrintSlave = false, enablePrintTool = false, enablePrintStatus = true;
         public List<Slave> replicatorsList;
         public int myPartitionNumber, partitionNumbers_Total;
         public int toolReceiverThreads, slaveReceiverThreads;
@@ -97,20 +97,22 @@ namespace broadcastListener{
             string kafkaHost = "localhost";//"192.168.1.8";//"localhost"
             StartupArgJson json = new StartupArgJson() {
                 myPartitionNumber = 0,
-                partitionNumbers_Total = 1,
+                partitionNumbers_Total = 2,
                 broadcastPort_Tool = 20001,
-                toolReceiverThreads = exclBind ? 1 : (int)Math.Ceiling(Environment.ProcessorCount / 2.0),//it's logical, not physical! it is the maximum number of thread executable simultaneously.
-                slaveReceiverThreads = exclBind ? 1 : (int)Math.Floor(Environment.ProcessorCount / 2.0),
+                toolReceiverThreads = 1,//exclBind ? 1 : (int)Math.Ceiling(Environment.ProcessorCount / 2.0),//it's logical, not physical! it is the maximum number of thread executable simultaneously.
+                slaveReceiverThreads = 1,// exclBind ? 1 : (int)Math.Floor(Environment.ProcessorCount / 2.0),
                 enableGUI = true,
+                enablePrintSlave = false,
+                enablePrintTool = false,
                 broadcastAddress = "192.168.1.255",
                 criticalErrFile = desktop + @"\Listener_CriticalErrors.txt",
                 errFile = desktop + @"\Listener_Errors.txt",
                 logFile = desktop + @"\Listener_EventLog.txt",
-                toolMsgFile = desktop + @"\Listener_ToolLog.txt",
+                toolMsgFile = null, //desktop + @"\Listener_ToolLog.txt",
                 slaveMsgFile = desktop + @"\Listener_SlaveLog.txt",
                 logToolMsgOnReceive = false,
                 exclusiveBind = exclBind,
-                KafkaNodes = "http://"+kafkaHost+":9093, http://"+kafkaHost+":9094, http://"+kafkaHost+":9094",
+                KafkaNodes = "http://"+kafkaHost+":9093, http://"+kafkaHost+":9094, http://"+kafkaHost+":9095",
                 KafkaTopic = "toolsEvents",
                 benchmark = true,
             };

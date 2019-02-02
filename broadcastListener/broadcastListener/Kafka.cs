@@ -73,10 +73,12 @@ namespace broadcastListener
             List<KafkaNet.Protocol.Message> arr = new List<KafkaNet.Protocol.Message>();
             if (mymsgs.Count == 0) return;
             myMessage last = null;
+            //KafkaNet.Protocol.Message tmp = new KafkaNet.Protocol.Message();
+            
             foreach (myMessage mymsg in mymsgs) { arr.Add(new KafkaNet.Protocol.Message(mymsg.data, mymsg.makeKafkaKey())); last = mymsg; }
             timeout = new TimeSpan(0, 0, 1);
             Task<List<ProduceResponse>> operationStatus = producer.SendMessageAsync(topicName, arr, 1, timeout, MessageCodec.CodecNone);//todo: can be zipped.
-
+            
             
             if (operationStatus == null) return;
             //operationStatus.Wait();
@@ -86,21 +88,24 @@ namespace broadcastListener
 
 
             object argArr = new object[] { mymsgs, last, operationStatus };
-            Thread t = new Thread(new ParameterizedThreadStart(WaitOperationComplete));
+            Thread t = new Thread(new ParameterizedThreadStart(WaitOperationComplete0));
             t.Name = "Thread Waiting For Kafka Reply";
             //WaitOperationComplete(argArr);
             t.Start(argArr);
             //todo: System.OutOfMemoryException
         }
 
+        private static void WaitOperationComplete0(object arguments){
+            try { WaitOperationComplete(arguments); }
+            catch (Exception ex) { Program.pe("Eccezione in Kafka.WaitOperationComplete: "+ex.ToString()); MessageBox.Show(ex.ToString()); }
+        }
+        public static volatile int totalSuccessSent = 0;
         private static void operationComplete(ICollection<myMessage> completed, myMessage last, List<ProduceResponse> reply) {
-   
             foreach (ProduceResponse response in reply) {
                 if (response.Error != 0) Program.pe("ErrNo " + response.Error + " for msg n° " + response.Offset + " of partition " + response.PartitionId + " in topic " + response.Topic);
             }
             if (Program.args.slaveNotifyMode_Batch == 0) {
-                foreach (myMessage mymsg in completed) {
-                    new myMessage(MessageType.confirmMessageSuccess_Single, mymsg.key).launchToOutput(); } }
+                foreach (myMessage mymsg in completed) { new myMessage(MessageType.confirmMessageSuccess_Single, mymsg.key).launchToOutput(); } }
             else { new myMessage(MessageType.confirmMessageSuccess_Batch, last.key).launchToOutput(); }
 
             if (Program.args.logToolMsgOnReceive == false){
@@ -109,6 +114,8 @@ namespace broadcastListener
                     Program.LogToolMsg("sentBatch["+(i++)+"/"+completed.Count+"]: "+mymsg.ToPrintString());
                 }
             }
+            //lock(totalSuccessSent)
+            totalSuccessSent += completed.Count;
         }
 
         public static void WaitOperationComplete(object arguments) {

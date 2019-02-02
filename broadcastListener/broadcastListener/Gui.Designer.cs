@@ -32,6 +32,7 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.textboxStatus = new System.Windows.Forms.RichTextBox();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.ButtonStat = new System.Windows.Forms.Button();
             this.richTextBoxErrors = new System.Windows.Forms.RichTextBox();
             this.panelMidd = new System.Windows.Forms.Panel();
             this.panelQueue = new System.Windows.Forms.Panel();
@@ -39,10 +40,10 @@
             this.labelQueue = new System.Windows.Forms.Label();
             this.panel4 = new System.Windows.Forms.Panel();
             this.panelBot = new System.Windows.Forms.Panel();
+            this.panel5 = new System.Windows.Forms.Panel();
+            this.richTextBoxmsg = new System.Windows.Forms.RichTextBox();
             this.panel6 = new System.Windows.Forms.Panel();
             this.label1 = new System.Windows.Forms.Label();
-            this.richTextBoxmsg = new System.Windows.Forms.RichTextBox();
-            this.panel5 = new System.Windows.Forms.Panel();
             this.panel3 = new System.Windows.Forms.Panel();
             this.panelreceivedSlave = new System.Windows.Forms.Panel();
             this.richTextBoxSlave = new System.Windows.Forms.RichTextBox();
@@ -55,8 +56,8 @@
             this.panelLabel.SuspendLayout();
             this.panel4.SuspendLayout();
             this.panelBot.SuspendLayout();
-            this.panel6.SuspendLayout();
             this.panel5.SuspendLayout();
+            this.panel6.SuspendLayout();
             this.panel3.SuspendLayout();
             this.panelreceivedSlave.SuspendLayout();
             this.panel8.SuspendLayout();
@@ -92,12 +93,24 @@
             // 
             // panel2
             // 
+            this.panel2.Controls.Add(this.ButtonStat);
             this.panel2.Controls.Add(this.richTextBoxErrors);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel2.Location = new System.Drawing.Point(0, 0);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(1064, 100);
             this.panel2.TabIndex = 5;
+            // 
+            // ButtonStat
+            // 
+            this.ButtonStat.Location = new System.Drawing.Point(989, 0);
+            this.ButtonStat.Margin = new System.Windows.Forms.Padding(0);
+            this.ButtonStat.Name = "ButtonStat";
+            this.ButtonStat.Size = new System.Drawing.Size(75, 24);
+            this.ButtonStat.TabIndex = 2;
+            this.ButtonStat.Text = "Statistics";
+            this.ButtonStat.UseVisualStyleBackColor = true;
+            this.ButtonStat.Click += new System.EventHandler(this.ButtonStat_Click);
             // 
             // richTextBoxErrors
             // 
@@ -165,6 +178,24 @@
             this.panelBot.Size = new System.Drawing.Size(1064, 83);
             this.panelBot.TabIndex = 9;
             // 
+            // panel5
+            // 
+            this.panel5.Controls.Add(this.richTextBoxmsg);
+            this.panel5.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panel5.Location = new System.Drawing.Point(0, 13);
+            this.panel5.Name = "panel5";
+            this.panel5.Size = new System.Drawing.Size(1064, 70);
+            this.panel5.TabIndex = 8;
+            // 
+            // richTextBoxmsg
+            // 
+            this.richTextBoxmsg.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.richTextBoxmsg.Location = new System.Drawing.Point(0, 0);
+            this.richTextBoxmsg.Name = "richTextBoxmsg";
+            this.richTextBoxmsg.Size = new System.Drawing.Size(1064, 70);
+            this.richTextBoxmsg.TabIndex = 3;
+            this.richTextBoxmsg.Text = "";
+            // 
             // panel6
             // 
             this.panel6.Controls.Add(this.label1);
@@ -183,24 +214,6 @@
             this.label1.TabIndex = 4;
             this.label1.Text = "Received  - Tool";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // richTextBoxmsg
-            // 
-            this.richTextBoxmsg.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.richTextBoxmsg.Location = new System.Drawing.Point(0, 0);
-            this.richTextBoxmsg.Name = "richTextBoxmsg";
-            this.richTextBoxmsg.Size = new System.Drawing.Size(1064, 70);
-            this.richTextBoxmsg.TabIndex = 3;
-            this.richTextBoxmsg.Text = "";
-            // 
-            // panel5
-            // 
-            this.panel5.Controls.Add(this.richTextBoxmsg);
-            this.panel5.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel5.Location = new System.Drawing.Point(0, 13);
-            this.panel5.Name = "panel5";
-            this.panel5.Size = new System.Drawing.Size(1064, 70);
-            this.panel5.TabIndex = 8;
             // 
             // panel3
             // 
@@ -262,9 +275,10 @@
             this.Controls.Add(this.panel4);
             this.Controls.Add(this.panel1);
             this.Name = "GUI";
-            this.Text = "Form1";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(GUI.GUI_FormClosing);
-            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(GUI.GUI_FormClosed);
+            this.ShowIcon = false;
+            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Show;
+            this.Text = "Broadcast Listener";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.GUI_FormClosing);
             this.panel1.ResumeLayout(false);
             this.panel2.ResumeLayout(false);
             this.panelMidd.ResumeLayout(false);
@@ -272,8 +286,8 @@
             this.panelLabel.ResumeLayout(false);
             this.panel4.ResumeLayout(false);
             this.panelBot.ResumeLayout(false);
-            this.panel6.ResumeLayout(false);
             this.panel5.ResumeLayout(false);
+            this.panel6.ResumeLayout(false);
             this.panel3.ResumeLayout(false);
             this.panelreceivedSlave.ResumeLayout(false);
             this.panel8.ResumeLayout(false);
@@ -303,6 +317,7 @@
         public System.Windows.Forms.RichTextBox richTextBoxSlave;
         private System.Windows.Forms.Panel panel8;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Button ButtonStat;
     }
 }
 

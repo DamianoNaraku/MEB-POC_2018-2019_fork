@@ -40,8 +40,8 @@ namespace broadcastListener
             MasterCrashChecker.Start();
         }
 
-        //public static void masterCrashCheckLoop() { try { masterCrashCheckLoop0(); } catch (Exception e) { MessageBox.Show(e.ToString()); } }
-        public static void masterCrashCheckLoop() {
+        public static void masterCrashCheckLoop() { try { masterCrashCheckLoop0(); } catch (Exception e) { if (e is ThreadAbortException) return; string s = "exception in MasterCrashCheck()" + e.ToString(); Program.pe(s); MessageBox.Show(s); } }
+        public static void masterCrashCheckLoop0() {
             try {
                 while (true) {
                     if (masterIsCrashedCheck()) {
@@ -119,11 +119,9 @@ namespace broadcastListener
 
 
         public static void publishToKafkaLoop() {
-            publishToKafkaLoop0(); return;
-            //try { publishToKafkaLoop0(); } catch (Exception e) { MessageBox.Show(e.ToString()); } 
+            try { publishToKafkaLoop0(); } catch (Exception e) { if (e is ThreadAbortException) return; string s = "exception in MasterPublisher" + e.ToString(); Program.pe(s); MessageBox.Show(s); } 
         }
-        internal static void publishToKafkaLoop0()
-        {
+        internal static void publishToKafkaLoop0() {
             int remaining, received = 0;
             //myMessage msg;
             bool checkbughere = true;
